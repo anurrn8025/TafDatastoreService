@@ -5,11 +5,9 @@ phases:
     runtime-versions:
       java: corretto11
     commands:
-      # Install Docker
-      - echo Installing Docker...
-      - yum install -y docker
-      - service docker start
-      - docker info
+      # Check if Docker is available (This should be true in most AWS CodeBuild environments)
+      - echo Checking Docker installation...
+      - docker --version
       # Install Gradle if not already installed
       - echo Installing Gradle...
       - curl -s https://get.sdkman.io | bash
