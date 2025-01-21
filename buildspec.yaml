@@ -1,52 +1,52 @@
 version: 0.2
 
 phases:
-  install:
-    runtime-versions:
-      java: corretto11
-    commands:
-      # Check if Docker is available (This should be true in most AWS CodeBuild environments)
-      - echo Checking Docker installation...
-      - docker --version
-      # Check if Gradle is available (Pre-installed in AWS CodeBuild)
-      - echo Checking Gradle installation...
-      - gradle -v
-
   pre_build:
     commands:
-      # Print the region and repository URI for debugging
+      - DOCKER_PASSWORD=Shundu1234
+      - DOCKER_USERNAME=Anusha0487
+      - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
       - echo "Region: us-east-1"
       - echo "Repository URI: 537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry"
-      # Ensure AWS_DEFAULT_REGION is set
-      - |
-        if [ -z "$AWS_DEFAULT_REGION" ]; then
-          echo "AWS_DEFAULT_REGION is not set. Setting default region to us-east-1."
-          export AWS_DEFAULT_REGION="us-east-1"  # Set your region if AWS_DEFAULT_REGION is not set
-        fi
-      # Authenticate Docker to AWS ECR using the updated AWS CLI v2 method
-      - echo Logging in to Amazon ECR...
-      - |
-        if [ -z "$REPOSITORY_URI" ]; then
-          echo "ERROR: REPOSITORY_URI is not set. Exiting..."
-          exit 1
-        fi
-        $(aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI)
+      - AWS_REGION = us-east-1
+      - AWS_ACCOUNT_ID=537124967315
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
+      - echo Granting execution permission to gradle wrapper
+      - chmod +x ./gradlew
+      - ./gradlew clean
 
   build:
     commands:
       # Build the Spring Boot application with Gradle
       - echo Building the Spring Boot application...
-      - gradle build
-      # Build the Docker image
+      - ./gradlew build
       - echo Building the Docker image...
-      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+      - IMAGE_REPO_NAME=flightregistry
+      - IMAGE_TAG=latest
+      - echo img-repo-name $IMAGE_REPO_NAME
+      - echo img-tag $IMAGE_TAG
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
 
   post_build:
     commands:
       # Push the Docker image to ECR
+      - echo "Tagging Docker image"
+      - echo post-build img-repo $IMAGE_REPO_NAME
+      - echo post-build accID $AWS_ACCOUNT_ID and region $AWS_REGION
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
       - echo Pushing the Docker image to Amazon ECR...
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+      - echo Writing image definitions file...
+      - REPOSITORY_URI=537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
+      - printf '[{"name":"flightregistry-service","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo Writing image definitions file...
+      - # add your container name
+      - DOCKER_CONTAINER_NAME=flightregistry
+      - printf '[{"name":"%s","imageUri":"%s"}]' $DOCKER_CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo Build process completed successfully.
 
 artifacts:
   files:
-    - target/*.jar
+    - build/libs/*.jar
+    - imagedefinitions.json
+  discard-paths: yes
