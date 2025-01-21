@@ -1,0 +1,44 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto11
+    commands:
+      # Install Docker
+      - echo Installing Docker...
+      - yum install -y docker
+      - service docker start
+      - docker info
+      # Install Gradle if not already installed
+      - echo Installing Gradle...
+      - curl -s https://get.sdkman.io | bash
+      - source "$HOME/.sdkman/bin/sdkman-init.sh"
+      - sdk install gradle
+      - gradle -v
+  pre_build:
+    commands:
+
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+      - aws --version
+      - REPOSITORY_URI=537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
+      - IMAGE_TAG=latest
+  build:
+    commands:
+      # Build the Spring Boot application with Gradle
+      - echo Building the Spring Boot application...
+      - gradle build
+      # Build the Docker image
+      - echo Building the Docker image...
+      - docker build -t 537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry:latest .
+  post_build:
+    commands:
+      # Push the Docker image to ECR
+      - echo Pushing the Docker image to Amazon ECR...
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+
+artifacts:
+  files:
+    - imagedefinitions.json
+    - target/course-service.jar
