@@ -1,40 +1,48 @@
 version: 0.2
 
-env:
-  variables:
-    REPOSITORY_URI: "537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry"
-    IMAGE_TAG: "latest"
+variables:
+  # Define your ECR repository URL here
+  REPOSITORY_URI: 537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
+  IMAGE_TAG: latest
 
 phases:
   install:
     runtime-versions:
-      docker: 19
-      java: openjdk11
+      java: openjdk11 # Only specify Java version here
     commands:
-      - echo "Installing Gradle..."
-      - curl -s https://get.sdkman.io | bash
-      - source "$HOME/.sdkman/bin/sdkman-init.sh"
-      - sdk install gradle 7.3 # You can adjust the version as needed
-      - gradle --version
+      # Install Gradle
+      echo Installing Gradle...
+      curl -s https://get.sdkman.io | bash
+      source "$HOME/.sdkman/bin/sdkman-init.sh"
+      sdk install gradle 7.3 # You can adjust the version as needed
+      gradle --version
 
   pre_build:
     commands:
-      - echo "Logging in to Amazon ECR..."
-      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+      # Login to AWS ECR
+      echo Logging in to Amazon ECR...
+      aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
+      aws --version
 
   build:
     commands:
-      - echo "Building the Spring Boot application..."
-      - ./gradlew build -x test # Skipping tests for faster builds; you can modify this if needed
-      - echo "Building the Docker image..."
-      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
-      - echo "Tagging the Docker image..."
-      - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
+      # Build your Spring Boot application using Gradle
+      echo Building the Spring Boot application...
+      ./gradlew build -x test # Skipping tests for faster builds; you can modify this if needed
+      
+      # Build Docker image
+      echo Building the Docker image...
+      docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+      
+      # Tag Docker image
+      echo Tagging the Docker image...
+      docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
 
   post_build:
     commands:
-      - echo "Pushing the Docker image to ECR..."
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      # Push the Docker image to Amazon ECR
+      echo Pushing the Docker image to Amazon ECR...
+      docker push $REPOSITORY_URI:$IMAGE_TAG
 
 artifacts:
   files:
