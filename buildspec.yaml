@@ -13,16 +13,23 @@ phases:
       - gradle -v
   pre_build:
     commands:
-      # Authenticate Docker to AWS ECR using the new AWS CLI v2 method
-      - echo Logging in to Amazon ECR...
+      # Print the region and repository URI for debugging
+      - echo "Region: us-east-1"
+      - echo "Repository URI: 537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry"
+      # Ensure AWS_DEFAULT_REGION is set
       - |
         if [ -z "$AWS_DEFAULT_REGION" ]; then
+          echo "AWS_DEFAULT_REGION is not set. Setting default region to us-east-1."
           export AWS_DEFAULT_REGION="us-east-1"  # Set your region if AWS_DEFAULT_REGION is not set
         fi
-      - $(aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI)
-      # Define ECR repository URI (replace with actual URI)
-      - REPOSITORY_URI=537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
-      - IMAGE_TAG=latest
+      # Authenticate Docker to AWS ECR using the updated AWS CLI v2 method
+      - echo Logging in to Amazon ECR...
+      - |
+        if [ -z "$REPOSITORY_URI" ]; then
+          echo "ERROR: REPOSITORY_URI is not set. Exiting..."
+          exit 1
+        fi
+        $(aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI)
   build:
     commands:
       # Build the Spring Boot application with Gradle
