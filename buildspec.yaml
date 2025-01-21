@@ -13,10 +13,14 @@ phases:
       - gradle -v
   pre_build:
     commands:
-      # Authenticate Docker to AWS ECR
+      # Authenticate Docker to AWS ECR using the new AWS CLI v2 method
       - echo Logging in to Amazon ECR...
-      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
-      # Define ECR repository URI
+      - |
+        if [ -z "$AWS_DEFAULT_REGION" ]; then
+          export AWS_DEFAULT_REGION="us-east-1"  # Set your region if AWS_DEFAULT_REGION is not set
+        fi
+      - $(aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI)
+      # Define ECR repository URI (replace with actual URI)
       - REPOSITORY_URI=537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
       - IMAGE_TAG=latest
   build:
