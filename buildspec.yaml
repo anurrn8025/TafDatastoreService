@@ -6,12 +6,10 @@ phases:
       - DOCKER_PASSWORD=Shundu1234
       - DOCKER_USERNAME=Anusha0487
       - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
-      - echo "Region: us-east-1"
-      - echo "Repository URI: 537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry"
-      - AWS_REGION = us-east-1
+      - AWS_REGION=us-east-1
       - AWS_ACCOUNT_ID=537124967315
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
-      - echo Granting execution permission to gradle wrapper
+      - echo "Granting execution permission to gradle wrapper"
       - chmod +x ./gradlew
       - ./gradlew clean
 
