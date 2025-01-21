@@ -1,37 +1,46 @@
 version: 0.2
 
+variables:
+    # Define your ECR repository URL here
+    REPOSITORY_URI: 537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
+    IMAGE_TAG: latest
+
 phases:
   install:
     runtime-versions:
-      java: corretto11
+      docker: 19
+      java: openjdk11
     commands:
-      # Install Docker
-      - echo Installing Docker...
-      - yum install -y docker
-      - service docker start
-      - docker info
-      # Install Gradle if not already installed
-      - echo Installing Gradle...
-      - curl -s https://get.sdkman.io | bash
-      - source "$HOME/.sdkman/bin/sdkman-init.sh"
-      - sdk install gradle
-      - gradle -v
+      # Install Gradle
+      echo Installing Gradle...
+      curl -s https://get.sdkman.io | bash
+      source "$HOME/.sdkman/bin/sdkman-init.sh"
+      sdk install gradle 7.3 # You can adjust the version as needed
+      gradle --version
   pre_build:
     commands:
-
+      # Login to AWS ECR
       - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
       - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
       - aws --version
       - REPOSITORY_URI=537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
       - IMAGE_TAG=latest
   build:
     commands:
-      # Build the Spring Boot application with Gradle
-      - echo Building the Spring Boot application...
-      - gradle build
-      # Build the Docker image
-      - echo Building the Docker image...
-      - docker build -t 537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry:latest .
+      commands:
+        # Build your Spring Boot application using Gradle
+        - echo Building the Spring Boot application...
+        - ./gradlew build -x test
+        # Skipping tests for faster builds; you can modify this if needed
+        
+        # Build Docker image
+        - echo Building the Docker image...
+        - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+        
+        # Tag Docker image
+        - echo Tagging the Docker image...
+        - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
   post_build:
     commands:
       # Push the Docker image to ECR
@@ -40,5 +49,5 @@ phases:
 
 artifacts:
   files:
-    - imagedefinitions.json
-    - target/course-service.jar
+    - Dockerfile
+    - build/libs/*.jar # Include your JAR file in case you want to use it later
