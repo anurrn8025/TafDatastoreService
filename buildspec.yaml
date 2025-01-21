@@ -8,11 +8,8 @@ phases:
       # Check if Docker is available (This should be true in most AWS CodeBuild environments)
       - echo Checking Docker installation...
       - docker --version
-      # Install Gradle if not already installed
-      - echo Installing Gradle...
-      - curl -s https://get.sdkman.io | bash
-      - source "$HOME/.sdkman/bin/sdkman-init.sh"
-      - sdk install gradle
+      # Check if Gradle is available (Pre-installed in AWS CodeBuild)
+      - echo Checking Gradle installation...
       - gradle -v
   pre_build:
     commands:
