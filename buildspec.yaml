@@ -1,50 +1,43 @@
 version: 0.2
 
-variables:
-  # Define your ECR repository URL here
-  REPOSITORY_URI: 537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
-  IMAGE_TAG: latest
-
 phases:
   install:
     runtime-versions:
-      java: openjdk11 # Only specify Java version here
+      java: corretto11
     commands:
-      # Install Gradle
-      echo Installing Gradle...
-      curl -s https://get.sdkman.io | bash
-      source "$HOME/.sdkman/bin/sdkman-init.sh"
-      sdk install gradle 7.3 # You can adjust the version as needed
-      gradle --version
-
+      # Install Docker
+      - echo Installing Docker...
+      - yum install -y docker
+      - service docker start
+      - docker info
+      # Install Gradle if not already installed
+      - echo Installing Gradle...
+      - curl -s https://get.sdkman.io | bash
+      - source "$HOME/.sdkman/bin/sdkman-init.sh"
+      - sdk install gradle
+      - gradle -v
   pre_build:
     commands:
-      # Login to AWS ECR
-      echo Logging in to Amazon ECR...
-      aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
-      aws --version
-
+      # Authenticate Docker to AWS ECR
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+      # Define ECR repository URI
+      - REPOSITORY_URI=537124967315.dkr.ecr.us-east-1.amazonaws.com/flightregistry
+      - IMAGE_TAG=latest
   build:
     commands:
-      # Build your Spring Boot application using Gradle
-      echo Building the Spring Boot application...
-      ./gradlew build -x test # Skipping tests for faster builds; you can modify this if needed
-      
-      # Build Docker image
-      echo Building the Docker image...
-      docker build -t $REPOSITORY_URI:$IMAGE_TAG .
-      
-      # Tag Docker image
-      echo Tagging the Docker image...
-      docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
-
+      # Build the Spring Boot application with Gradle
+      - echo Building the Spring Boot application...
+      - gradle build
+      # Build the Docker image
+      - echo Building the Docker image...
+      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
   post_build:
     commands:
-      # Push the Docker image to Amazon ECR
-      echo Pushing the Docker image to Amazon ECR...
-      docker push $REPOSITORY_URI:$IMAGE_TAG
+      # Push the Docker image to ECR
+      - echo Pushing the Docker image to Amazon ECR...
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
 
 artifacts:
   files:
-    - Dockerfile
-    - build/libs/*.jar # Include your JAR file in case you want to use it later
+    - target/*.jar
