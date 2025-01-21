@@ -11,6 +11,7 @@ phases:
       # Check if Gradle is available (Pre-installed in AWS CodeBuild)
       - echo Checking Gradle installation...
       - gradle -v
+
   pre_build:
     commands:
       # Print the region and repository URI for debugging
@@ -30,6 +31,7 @@ phases:
           exit 1
         fi
         $(aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI)
+
   build:
     commands:
       # Build the Spring Boot application with Gradle
@@ -38,6 +40,7 @@ phases:
       # Build the Docker image
       - echo Building the Docker image...
       - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+
   post_build:
     commands:
       # Push the Docker image to ECR
