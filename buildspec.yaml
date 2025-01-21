@@ -4,7 +4,7 @@ phases:
   pre_build:
     commands:
       - DOCKER_PASSWORD=Shundu1234
-      - DOCKER_USERNAME=Anusha0487
+      - DOCKER_USERNAME=anusha0487
       - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
       - AWS_REGION=us-east-1
       - AWS_ACCOUNT_ID=537124967315
