@@ -70,4 +70,9 @@ public class FlightServiceImpl implements FlightService {
         System.out.println("delete existing flight ");
         flightsRepository.deleteById(flightId);
     }
+
+    public Flights getFlightID(String departure, String arrival) {
+        System.out.println("get single ID for given departure and arrival points with :" +departure + " and " + arrival);
+        return flightsRepository.findByDepartureAndArrival(departure,arrival);
+    }
 }

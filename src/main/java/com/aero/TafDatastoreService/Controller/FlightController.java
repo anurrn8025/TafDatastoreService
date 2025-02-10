@@ -19,6 +19,7 @@ public class FlightController {
     private final FlightServiceImpl flightServiceImpl;
 
     @GetMapping("/flights")
+
     public List<Flights> getAllFlights(){
         return flightServiceImpl.getAllFlights();
     }
@@ -26,6 +27,12 @@ public class FlightController {
     @GetMapping("/flights/{flightId}")
     public Flights getSingleFlight(@PathVariable("flightId")Long flightId){
         return flightServiceImpl.getSingleFlight(flightId);
+    }
+
+    @CrossOrigin(origins = "http://localhost:3000")
+    @GetMapping("/flights/{departure}/{arrival}")
+    public Flights getFlightID(@PathVariable("departure")String departure,@PathVariable("arrival")String arrival){
+        return flightServiceImpl.getFlightID(departure,arrival);
     }
 
     @PostMapping("/flights")
